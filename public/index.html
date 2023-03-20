@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Reminder App</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+   
+    <!-- Add the Bootstrap CSS and JS files to your HTML file -->
+ 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+</head>
+<body>
+    
+    <div class="container">
+        <form id="registration-form">
+            <h1 style="color: blue;">Schedule A Reminder For Your Exam </h1>
+          <div class="form-group row">
+              <label for="name" class="col-sm-2 col-form-label">Name</label>
+              <div class="col-sm-10">
+                  <input type="text" class="form-control" id="name" placeholder="Enter your name">
+              </div>
+          </div>
+          <div class="form-group row">
+              <label for="email" class="col-sm-2 col-form-label">Email</label>
+              <div class="col-sm-10">
+                  <input type="email" class="form-control" id="email" placeholder="Enter your email">
+              </div>
+          </div>
+          <div class="form-group row">
+              <label for="matric" class="col-sm-2 col-form-label">Matric</label>
+              <div class="col-sm-10">
+                  <input type="text" class="form-control" id="matric" placeholder="Enter your matric">
+              </div>
+          </div>
+          <div class="form-group row">
+              <label for="date" class="col-sm-2 col-form-label">Exam Date</label>
+              <div class="col-sm-10">
+                  <input type="date" class="form-control" id="date" placeholder="Enter your date">
+              </div>
+          </div>
+          <div class="form-group row">
+              <label for="time" class="col-sm-2 col-form-label">Exam Time(24-hr)</label>
+              <div class="col-sm-10">
+                  <input type="time" class="form-control" id="time" placeholder="Enter your time in 24-hr format">
+              </div>
+          </div>
+          <button type="submit" class="btn-primary">Submit</button>
+        </form>
+      </div>
+    
+    
+    <script src="./index.js"></script>
+</body>
+</html>
