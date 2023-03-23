@@ -34,8 +34,7 @@ Exam Reminder is a web application that allows users to register for exam remind
 - SendGrid
 - Cron
 
-## Contributors
-- Your Name
+
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
