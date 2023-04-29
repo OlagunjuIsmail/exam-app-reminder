@@ -54,6 +54,27 @@ app.post("/add", async (req, res) => {
   const hourReminder = new Date(examDate - 60 * 60 * 1000); // 1 hour before exam
   const dayReminder = new Date(examDate - 24 * 60 * 60 * 1000); // 1 day before exam
 
+   const newReminder = new Reminder({
+    name,
+    email,
+    examDate,
+    minsReminder,
+    hourReminder,
+    dayReminder,
+  });
+  
+
+  //schedule reminder emails
+  try {
+    scheduleReminder(newReminder);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error scheduling reminder emails");
+    return;
+  }
+  
+  
+  
   const confirmationMsg = {
     to: email,
     from: "olagunjuismail7@gmail.com",
@@ -75,17 +96,11 @@ app.post("/add", async (req, res) => {
     return;
   }
 
-  const newReminder = new Reminder({
-    name,
-    email,
-    examDate,
-    minsReminder,
-    hourReminder,
-    dayReminder,
-  });
+ 
   newReminder.save().then(() => {
     console.log("Reminder added!");
-    scheduleReminder(newReminder);
+    //scheduleReminder(newReminder);
+    res.status(200).send({ message: "Exam reminder set successfully" });
   });
 });
 
