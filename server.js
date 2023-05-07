@@ -54,7 +54,7 @@ app.post("/add", async (req, res) => {
   const hourReminder = new Date(examDate - 60 * 60 * 1000); // 1 hour before exam
   const dayReminder = new Date(examDate - 24 * 60 * 60 * 1000); // 1 day before exam
 
-   const newReminder = new Reminder({
+  const newReminder = new Reminder({
     name,
     email,
     examDate,
@@ -62,7 +62,6 @@ app.post("/add", async (req, res) => {
     hourReminder,
     dayReminder,
   });
-  
 
   //schedule reminder emails
   try {
@@ -72,9 +71,7 @@ app.post("/add", async (req, res) => {
     res.status(500).send("Error scheduling reminder emails");
     return;
   }
-  
-  
-  
+
   const confirmationMsg = {
     to: email,
     from: "olagunjuismail7@gmail.com",
@@ -89,14 +86,13 @@ app.post("/add", async (req, res) => {
 
   try {
     await sgMail.send(confirmationMsg);
-    res.status(200).send({ message: "Exam reminder set successfully" });
+    console.log("Confirmation email sent successfully!");
   } catch (error) {
     console.error(error);
     res.status(500).send("Error sending confirmation email");
     return;
   }
 
- 
   newReminder.save().then(() => {
     console.log("Reminder added!");
     //scheduleReminder(newReminder);
