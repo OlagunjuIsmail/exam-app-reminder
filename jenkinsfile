@@ -11,14 +11,14 @@ pipeline {
         stage('Build') {
             steps {
                 // Build the Docker image with the app
-                sh 'docker build -t ismail-app .'
+                sh 'sudo docker build -t ismail-app .'
             }
         }
         
         stage('Test') {
             steps {
                 // Run tests within a Docker container
-                sh 'docker run --rm ismail-app npm test'
+                sh 'sudo docker run --rm ismail-app npm test'
             }
         }
         
@@ -30,7 +30,7 @@ pipeline {
                     }
                 }
                 // Deploy using docker run command
-                sh 'docker run -d -p 3000:3000 ismail-app'
+                sh 'sudo docker run -d -p 3000:3000 ismail-app'
             }
         }
     }
