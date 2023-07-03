@@ -24,6 +24,7 @@ mongoose.connect(uri, {
   autoIndex: true,
   useUnifiedTopology: true,
 });
+mongoose.set("strictQuery", false);
 
 const connection = mongoose.connection;
 connection.once("open", () => {
@@ -94,7 +95,9 @@ app.post("/add", async (req, res) => {
   }
 
   newReminder.save().then(() => {
+   if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
     console.log("Reminder added!");
+   }
     //scheduleReminder(newReminder);
     res.status(200).send({ message: "Exam reminder set successfully" });
   });
@@ -200,3 +203,5 @@ app.listen(port, async () => {
     scheduleReminder(reminder);
   });
 });
+
+module.exports = { app };
