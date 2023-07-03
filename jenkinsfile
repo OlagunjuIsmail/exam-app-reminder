@@ -8,10 +8,16 @@ pipeline {
             }
         }
         
-        stage('Build and Test') {
+        stage('Build') {
             steps {
-                // Build the Docker image with the app and run tests
+                // Build the Docker image with the app
                 sh 'docker build -t ismail-app .'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                // Run tests within a Docker container
                 sh 'docker run --rm ismail-app npm test'
             }
         }
@@ -20,7 +26,7 @@ pipeline {
             steps {
                 when {
                     expression {
-                        currentbUILD.RESULT == 'SUCCESS'
+                        currentBuild.result == 'SUCCESS'
                     }
                 }
                 // Deploy using docker run command
