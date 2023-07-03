@@ -26,7 +26,7 @@ form.addEventListener("submit", (e) => {
     alert("Please enter a valid time in the format HH:mm in the 24-hr format");
     return;
   }
-  fetch("http://localhost:3000/add", {
+  fetch("${url}/add", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
