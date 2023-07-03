@@ -7,13 +7,6 @@ pipeline {
                 checkout scm
             }
         }
-        stage('install nodejs and npm') {
-            steps {
-                sh 'sudo apt-get update'
-                sh 'sudo apt-get install nodejs'
-                sh 'sudo apt-get install npm'
-            }
-        }
         
         stage('Build and Test') {
             steps {
@@ -27,7 +20,7 @@ pipeline {
             steps {
                 when {
                     expression {
-                        currentbUILD.RESULT -- 'SUCCESS'
+                        currentbUILD.RESULT == 'SUCCESS'
                     }
                 }
                 // Deploy using docker run command
