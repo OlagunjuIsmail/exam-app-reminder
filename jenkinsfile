@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('install nodejs and npm') {
+            steps {
+                sh 'sudo apt-get update'
+                sh 'sudo apt-get install nodejs'
+                sh 'sudo apt-get install npm'
+            }
+        }
+        
+        stage('Build and Test') {
+            steps {
+                // Build the Docker image with the app and run tests
+                sh 'docker build -t ismail-app .'
+                sh 'docker run --rm ismail-app npm test'
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                when {
+                    expression {
+                        currentbUILD.RESULT -- 'SUCCESS'
+                    }
+                }
+                // Deploy using docker run command
+                sh 'docker run -d -p 3000:3000 ismail-app'
+            }
+        }
+    }
+}
