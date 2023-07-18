@@ -1,4 +1,5 @@
 # Exam Reminder
+Access the site here https://exam-app-reminder.ismailakanfe.me/
 
 Exam Reminder is a web application that allows users to register for exam reminders. Users can enter their personal details and exam date, and the system sends email reminders to users at specified times before the exam.
 
