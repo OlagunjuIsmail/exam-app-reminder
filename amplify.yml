@@ -7,9 +7,6 @@ frontend:
     build:
       commands:
         - node --version
-        - export NODE_OPTIONS=--max-old-space-size=7168
-        - env | grep -e CS_API_ACCESS_TOKEN -e GENERATE_WL_BUILD >> .env.production
-        - env | grep -e NEXT_PUBLIC_ >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
