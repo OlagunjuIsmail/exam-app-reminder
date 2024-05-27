@@ -22,7 +22,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: ismail-app-config
-              key: MONGODB_URI
+              key: ATLAS_URI
         - name: SG_API_KEY
           valueFrom:
             configMapKeyRef:
