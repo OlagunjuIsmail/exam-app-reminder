@@ -10,41 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: Log in to Amazon ECR
-      id: login-ecr
-      run: |
-        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Build and push Docker image
-      run: |
-        IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-        docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/ismail-app:$IMAGE_TAG .
-        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/ismail-app:$IMAGE_TAG
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+          docker build -t <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG .
+          docker push <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG
 
-    - name: Update kubeconfig
-      run: aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name my-eks-cluster --region ${{ secrets.AWS_REGION }}
 
-    - name: Replace placeholders in configmap.yaml
-      run: |
-        sed -i "s|__ATLAS_URI__|${{ secrets.ATLAS_URI }}|g" configmap.yaml
+      - name: Replace placeholders in configmap.yaml
+        run: sed -i "s|__ATLAS_URI__|${{ secrets.ATLAS_URI }}|g" configmap.yaml
 
-    - name: Apply ConfigMap to EKS
-      run: kubectl apply -f configmap.yaml
-
-    - name: Apply Kubernetes manifests
-      run: |
-        kubectl apply -f deploy.yaml
-        kubectl apply -f service.yaml
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f configmap.yaml
+          kubectl apply -f deploy.yaml
+          kubectl apply -f service.yaml
