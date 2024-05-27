@@ -15,10 +15,11 @@ spec:
       containers:
       - name: ismail-app
         image: 767747242446.dkr.ecr.us-east-1.amazonaws.com/ismail-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:
-        - name: MONGODB_URI
+        - name: ATLAS_URI
           valueFrom:
             configMapKeyRef:
               name: ismail-app-config
