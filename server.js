@@ -21,8 +21,9 @@ sgMail.setApiKey(process.env.SG_API_KEY);
 const uri = process.env.ATLAS_URI;
 mongoose.connect(uri, {
   useNewUrlParser: true,
-  autoIndex: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 60000,
+  socketTimeoutMS: 60000,
 });
 mongoose.set("strictQuery", false);
 
@@ -31,8 +32,12 @@ connection.once("open", () => {
   console.log("MongoDB database connection established successfully");
 });
 
-const Schema = mongoose.Schema;
+connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+});
 
+// Schemas and Models
+const Schema = mongoose.Schema;
 const reminderSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
@@ -41,19 +46,23 @@ const reminderSchema = new Schema({
   hourReminder: { type: Date, required: true },
   dayReminder: { type: Date, required: true },
 });
-
 const Reminder = mongoose.model("Reminder", reminderSchema);
 
+// Routes
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.post("/add", async (req, res) => {
   const { name, email, matric, date, time } = req.body;
-  const examDate = new Date(date + " " + time);
-  const minsReminder = new Date(examDate - 15 * 60 * 1000); // 15 minutes before exam
-  const hourReminder = new Date(examDate - 60 * 60 * 1000); // 1 hour before exam
-  const dayReminder = new Date(examDate - 24 * 60 * 60 * 1000); // 1 day before exam
+  if (!name || !email || !matric || !date || !time) {
+    return res.status(400).send("All fields are required");
+  }
+
+  const examDate = new Date(`${date} ${time}`);
+  const minsReminder = new Date(examDate - 15 * 60 * 1000);
+  const hourReminder = new Date(examDate - 60 * 60 * 1000);
+  const dayReminder = new Date(examDate - 24 * 60 * 60 * 1000);
 
   const newReminder = new Reminder({
     name,
@@ -64,144 +73,142 @@ app.post("/add", async (req, res) => {
     dayReminder,
   });
 
-  //schedule reminder emails
   try {
+    await newReminder.save();
     scheduleReminder(newReminder);
+
+    const confirmationMsg = {
+      to: email,
+      from: "olagunjuismail7@gmail.com",
+      subject: "Exam reminder registration successful",
+      html: `<h1 style="color:green;">Exam Reminder Registration</h1>
+             <p>Hello ${name}, you have successfully registered for an exam reminder. Your details are as follows:</p>
+             <p><strong>Matric Number:</strong> ${matric}</p>
+             <p><strong>Exam Date:</strong> ${examDate.toString()}</p>
+             <p>Thank you.</p>`,
+    };
+    await sgMail.send(confirmationMsg);
+    res.status(200).send({ message: "Exam reminder set successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Error scheduling reminder emails");
-    return;
+    console.error("Error processing request:", error);
+    res.status(500).send("An error occurred while setting the reminder. Please try again.");
+  }
+});
+
+app.get("/reminders", async (req, res) => {
+  try {
+    const reminders = await Reminder.find();
+    res.status(200).json(reminders);
+  } catch (error) {
+    console.error("Error fetching reminders:", error);
+    res.status(500).send("An error occurred while fetching reminders");
+  }
+});
+
+app.put("/reminder/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, email, matric, date, time } = req.body;
+
+  if (!name || !email || !matric || !date || !time) {
+    return res.status(400).send("All fields are required");
   }
 
-  const confirmationMsg = {
-    to: email,
-    from: "olagunjuismail7@gmail.com",
-    subject: "Exam reminder registration successful",
-    html: `<h1 style="color:green;">Exam Reminder Registration</h1>
-    <p>Hello ${name}, you have successfully registered for an exam reminder. Your details are as follows:</p>
-    <p><strong>Matric Number:</strong> ${matric}</p>
-    <p><strong>Exam Date:</strong> ${examDate.toString()}</p>
-    <br><br>
-    <p>Thank you.</p>`,
-  };
+  const examDate = new Date(`${date} ${time}`);
+  const minsReminder = new Date(examDate - 15 * 60 * 1000);
+  const hourReminder = new Date(examDate - 60 * 60 * 1000);
+  const dayReminder = new Date(examDate - 24 * 60 * 60 * 1000);
 
   try {
-    await sgMail.send(confirmationMsg);
-    console.log("Confirmation email sent successfully!");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Error sending confirmation email");
-    return;
-  }
+    const updatedReminder = await Reminder.findByIdAndUpdate(id, {
+      name,
+      email,
+      examDate,
+      minsReminder,
+      hourReminder,
+      dayReminder,
+    }, { new: true });
 
-  newReminder.save().then(() => {
-   if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
-    console.log("Reminder added!");
-   }
-    //scheduleReminder(newReminder);
-    res.status(200).send({ message: "Exam reminder set successfully" });
-  });
+    if (!updatedReminder) {
+      return res.status(404).send("Reminder not found");
+    }
+
+    res.status(200).json(updatedReminder);
+  } catch (error) {
+    console.error("Error updating reminder:", error);
+    res.status(500).send("An error occurred while updating the reminder");
+  }
+});
+
+app.delete("/reminder/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedReminder = await Reminder.findByIdAndDelete(id);
+
+    if (!deletedReminder) {
+      return res.status(404).send("Reminder not found");
+    }
+
+    res.status(200).send("Reminder deleted successfully");
+  } catch (error) {
+    console.error("Error deleting reminder:", error);
+    res.status(500).send("An error occurred while deleting the reminder");
+  }
 });
 
 function scheduleReminder(reminder) {
-  const { name, email, examDate, minsReminder, hourReminder, dayReminder } =
-    reminder;
+  const { name, email, examDate, minsReminder, hourReminder, dayReminder } = reminder;
 
   // Schedule day reminder
-  // ...
-  // (task1 code remains the same)
-
   const task1 = cron.schedule(
     `0 ${dayReminder.getMinutes()} ${dayReminder.getHours()} ${dayReminder.getDate()} ${
       dayReminder.getMonth() + 1
     } *`,
-    () => {
-      const msg = {
-        to: email,
-        from: "olagunjuismail7@gmail.com",
-        subject: "Reminder: Exam tomorrow",
-        html: `<h1 style="color:blue;">Exam Reminder</h1>
-              <p>Hello ${name}, this is a friendly reminder that your exam is tomorrow ${examDate.toString()}.</p>
-              <br><br>
-              <p>Prepare well and be punctual to the venue</p>
-              <br><br>
-              <p>Best of luck!</p>`,
-      };
-      sgMail.send(msg).catch((error) => {
-        console.error(error);
-      });
-    },
-    {
-      scheduled: false,
-    }
+    () => sendEmail(email, "Reminder: Exam tomorrow", generateEmailContent(name, `your exam is tomorrow ${examDate.toString()}`)),
+    { scheduled: false }
   );
   task1.start();
 
   // Schedule hour reminder
-  // ...
-  // (task2 code remains the same)
-
   const task2 = cron.schedule(
     `0 ${hourReminder.getMinutes()} ${hourReminder.getHours()} ${hourReminder.getDate()} ${
       hourReminder.getMonth() + 1
     } *`,
-    () => {
-      const msg = {
-        to: email,
-        from: "olagunjuismail7@gmail.com",
-        subject: "Reminder: Exam in an hour",
-        html: `<h1 style="color:blueviolet;">Exam Reminder</h1>
-        <p>Hello ${name}, this is a friendly reminder that your exam is in an hour at ${examDate}.</p>
-        <br><br>
-        <p>Best of luck!</p>`,
-      };
-      sgMail.send(msg).catch((error) => {
-        console.error(error);
-      });
-    },
-    {
-      scheduled: false,
-    }
+    () => sendEmail(email, "Reminder: Exam in an hour", generateEmailContent(name, `your exam is in an hour at ${examDate}`)),
+    { scheduled: false }
   );
   task2.start();
 
   // Schedule 15 minutes reminder
-  // ...
-  // (task3 code remains the same)
   const task3 = cron.schedule(
     `0 ${minsReminder.getMinutes()} ${minsReminder.getHours()} ${minsReminder.getDate()} ${
       minsReminder.getMonth() + 1
     } *`,
-    () => {
-      const msg = {
-        to: email,
-        from: "olagunjuismail7@gmail.com",
-        subject: "Reminder: Exam in 15 minutes",
-        html: `<h1 style="color:red;">Exam Reminder</h1>
-        <p>Hello ${name}, this is a friendly reminder that your exam starts in the next 15 minutes. Gather all your writing materials and head to your venue right now</p>
-        <br><br>
-        <p>Best of luck ${name}!</p>`,
-      };
-      sgMail.send(msg).catch((error) => {
-        console.error(error);
-      });
-    },
-    {
-      scheduled: false,
-    }
+    () => sendEmail(email, "Reminder: Exam in 15 minutes", generateEmailContent(name, `your exam starts in the next 15 minutes.`)),
+    { scheduled: false }
   );
   task3.start();
 }
 
-app.listen(port, async () => {
-  console.log(`listening on port ${port}`);
+function sendEmail(to, subject, htmlContent) {
+  const msg = { to, from: "olagunjuismail7@gmail.com", subject, html: htmlContent };
+  sgMail.send(msg).catch((error) => console.error("Error sending email:", error));
+}
 
-  // Query the database for existing reminders
-  const reminders = await Reminder.find();
-  // Schedule reminders for each existing reminder
-  reminders.forEach((reminder) => {
-    scheduleReminder(reminder);
-  });
+function generateEmailContent(name, message) {
+  return `<h1 style="color:blue;">Exam Reminder</h1>
+          <p>Hello ${name}, this is a friendly reminder that ${message}</p>
+          <p>Best of luck!</p>`;
+}
+
+app.listen(port, async () => {
+  console.log(`Server listening on port ${port}`);
+  try {
+    const reminders = await Reminder.find();
+    reminders.forEach(scheduleReminder);
+  } catch (error) {
+    console.error("Error querying reminders:", error);
+  }
 });
 
 module.exports = { app };

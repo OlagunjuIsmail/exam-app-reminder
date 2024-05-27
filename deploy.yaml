@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ismail-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ismail-app
+  template:
+    metadata:
+      labels:
+        app: ismail-app
+    spec:
+      containers:
+      - name: ismail-app
+        image: 767747242446.dkr.ecr.us-east-1.amazonaws.com/ismail-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            configMapKeyRef:
+              name: ismail-app-config
+              key: MONGODB_URI
+        - name: SG_API_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: ismail-app-config
+              key: SG_API_KEY
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

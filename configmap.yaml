@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ismail-app-config
+data:
+  SG_API_KEY: "_SG_API_KEY_"
+  ATLAS_URI:  "_ATLAS_URI_"
