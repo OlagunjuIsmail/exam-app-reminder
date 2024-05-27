@@ -53,3 +53,12 @@ jobs:
           kubectl apply -f configmap.yaml
           kubectl apply -f deploy.yaml
           kubectl apply -f service.yaml
+
+      - name: Scale down deployment
+        run: kubectl scale deployment ismail-app --replicas=0
+
+      - name: Scale up deployment
+        run: kubectl scale deployment ismail-app --replicas=2
+
+      - name: Wait for Deployment Rollout
+        run: kubectl rollout status deployment/ismail-app --timeout=600s    
