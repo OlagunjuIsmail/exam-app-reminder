@@ -25,13 +25,13 @@ jobs:
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build and push Docker image
         run: |
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-          docker build -t <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG .
-          docker push <your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG .
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/ismail-app:$IMAGE_TAG
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name my-eks-cluster --region ${{ secrets.AWS_REGION }}
